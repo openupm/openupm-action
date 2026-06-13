@@ -42,7 +42,8 @@ jobs:
 For prefixed tags such as `upm/1.2.3`, pass `version: 1.2.3` and
 `tag: upm/1.2.3`. The action requests an OIDC token for the `openupm`
 audience, asks OpenUPM to scan the registered package repository, then polls the
-release status endpoint.
+release status endpoint. The `version` input must match the `version` field in
+the package's `package.json` at that tag.
 
 ## GitHub Release Workflow
 
@@ -78,14 +79,15 @@ jobs:
 ```
 
 If your release tags already match `package.json.version`, use the tag value
-directly for both `version` and `tag`.
+directly for both `version` and `tag`. Otherwise, pass the package version as
+`version` and the original release tag as `tag`.
 
 ## Inputs
 
 | Input | Default | Description |
 | --- | --- | --- |
 | `package` | required | OpenUPM package name. |
-| `version` | required | Package version to wait for. |
+| `version` | required | Package version to wait for. This must match `package.json.version` at the tag. |
 | `tag` | empty | Git tag that triggered the workflow. When set, OpenUPM verifies it against the OIDC token ref. |
 | `timeout-minutes` | `15` | Maximum time to wait before failing the action. |
 | `poll-interval-seconds` | `15` | Delay between status checks. |
