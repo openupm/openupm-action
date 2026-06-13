@@ -27401,13 +27401,13 @@ function getInputs() {
     const pollIntervalSeconds = (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validatePositiveNumber */ .lk)('poll-interval-seconds', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('poll-interval-seconds'));
     const tag = _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('tag').trim();
     return {
-        apiUrl: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('api-url', { required: true }),
-        oidcAudience: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('oidc-audience', { required: true }),
-        packageName: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('package', { required: true }),
+        apiUrl: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('api-url', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('api-url', { required: true })),
+        oidcAudience: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('oidc-audience', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('oidc-audience', { required: true })),
+        packageName: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('package', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('package', { required: true })),
         pollIntervalMs: pollIntervalSeconds * 1000,
         tag: tag || undefined,
         timeoutMs: timeoutMinutes * 60 * 1000,
-        version: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('version', { required: true }),
+        version: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('version', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('version', { required: true })),
     };
 }
 function sleep(ms) {
@@ -27477,6 +27477,7 @@ __webpack_async_result__();
 /***/ ((__unused_webpack___webpack_module__, __webpack_exports__, __nccwpck_require__) => {
 
 /* harmony export */ __nccwpck_require__.d(__webpack_exports__, {
+/* harmony export */   Ho: () => (/* binding */ validateRequiredString),
 /* harmony export */   NS: () => (/* binding */ OpenUpmApiError),
 /* harmony export */   Oo: () => (/* binding */ OpenUpmClient),
 /* harmony export */   lk: () => (/* binding */ validatePositiveNumber),
@@ -27552,6 +27553,13 @@ function validatePositiveNumber(name, value) {
         throw new Error(`${name} must be a positive number.`);
     }
     return parsed;
+}
+function validateRequiredString(name, value) {
+    const trimmed = value.trim();
+    if (!trimmed) {
+        throw new Error(`${name} must not be empty.`);
+    }
+    return trimmed;
 }
 async function triggerRefreshWithRetry(params) {
     let lastError;

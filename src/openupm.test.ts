@@ -6,6 +6,7 @@ import {
   isRetryableStatusError,
   triggerRefreshWithRetry,
   validatePositiveNumber,
+  validateRequiredString,
   waitForPublishedVersion,
   type ReleaseStatus,
 } from './openupm.js';
@@ -315,6 +316,17 @@ describe('validatePositiveNumber', () => {
     expect(validatePositiveNumber('timeout-minutes', '15')).toBe(15);
     expect(() => validatePositiveNumber('timeout-minutes', '0')).toThrow(
       'timeout-minutes must be a positive number.',
+    );
+  });
+});
+
+describe('validateRequiredString', () => {
+  it('trims non-empty strings and rejects blank values', () => {
+    expect(validateRequiredString('package', ' com.example.foo ')).toBe(
+      'com.example.foo',
+    );
+    expect(() => validateRequiredString('package', '   ')).toThrow(
+      'package must not be empty.',
     );
   });
 });

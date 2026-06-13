@@ -136,6 +136,14 @@ export function validatePositiveNumber(
   return parsed;
 }
 
+export function validateRequiredString(name: string, value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    throw new Error(`${name} must not be empty.`);
+  }
+  return trimmed;
+}
+
 export async function triggerRefreshWithRetry(params: {
   attempts: number;
   client: Pick<OpenUpmClient, 'triggerRefresh'>;

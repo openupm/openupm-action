@@ -5,6 +5,7 @@ import {
   OpenUpmApiError,
   triggerRefreshWithRetry,
   validatePositiveNumber,
+  validateRequiredString,
   waitForPublishedVersion,
 } from './openupm.js';
 
@@ -27,13 +28,25 @@ function getInputs(): {
   );
   const tag = core.getInput('tag').trim();
   return {
-    apiUrl: core.getInput('api-url', { required: true }),
-    oidcAudience: core.getInput('oidc-audience', { required: true }),
-    packageName: core.getInput('package', { required: true }),
+    apiUrl: validateRequiredString(
+      'api-url',
+      core.getInput('api-url', { required: true }),
+    ),
+    oidcAudience: validateRequiredString(
+      'oidc-audience',
+      core.getInput('oidc-audience', { required: true }),
+    ),
+    packageName: validateRequiredString(
+      'package',
+      core.getInput('package', { required: true }),
+    ),
     pollIntervalMs: pollIntervalSeconds * 1000,
     tag: tag || undefined,
     timeoutMs: timeoutMinutes * 60 * 1000,
-    version: core.getInput('version', { required: true }),
+    version: validateRequiredString(
+      'version',
+      core.getInput('version', { required: true }),
+    ),
   };
 }
 
