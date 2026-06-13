@@ -145,7 +145,9 @@ export async function waitForPublishedVersion(params: {
       return status as WaitResult;
     }
 
-    await params.sleep(params.pollIntervalMs);
+    const remainingMs = deadline - now();
+    if (remainingMs <= 0) break;
+    await params.sleep(Math.min(params.pollIntervalMs, remainingMs));
   }
 
   return {

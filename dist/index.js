@@ -27548,7 +27548,10 @@ async function waitForPublishedVersion(params) {
         if (status.state === 'succeeded' || status.state === 'failed') {
             return status;
         }
-        await params.sleep(params.pollIntervalMs);
+        const remainingMs = deadline - now();
+        if (remainingMs <= 0)
+            break;
+        await params.sleep(Math.min(params.pollIntervalMs, remainingMs));
     }
     return {
         packageName: params.packageName,

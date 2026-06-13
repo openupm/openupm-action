@@ -154,6 +154,36 @@ describe('waitForPublishedVersion', () => {
 
     expect(result.state).toBe('timeout');
   });
+
+  it('caps the final sleep to the remaining timeout', async () => {
+    let now = 0;
+    const sleepDurations: number[] = [];
+    const client = {
+      getReleaseStatus: vi.fn().mockResolvedValue({
+        packageName: 'com.example.foo',
+        version: '1.2.3',
+        state: 'building',
+        reason: 'none',
+        signed: false,
+      }),
+    };
+
+    const result = await waitForPublishedVersion({
+      client,
+      now: () => now,
+      packageName: 'com.example.foo',
+      pollIntervalMs: 10_000,
+      sleep: async (ms) => {
+        sleepDurations.push(ms);
+        now += ms;
+      },
+      timeoutMs: 3_000,
+      version: '1.2.3',
+    });
+
+    expect(result.state).toBe('timeout');
+    expect(sleepDurations).toEqual([3_000]);
+  });
 });
 
 describe('validatePositiveNumber', () => {
