@@ -102,6 +102,12 @@ directly for both `version` and `tag`.
 | `signed` | Whether OpenUPM reports the package as signed. |
 | `package-url` | OpenUPM package page URL. |
 
+## Versioning
+
+Use `openupm/openupm-action@v1` for normal workflows. The `v1` tag is updated
+only for compatible fixes and improvements. Pin to a full release tag when you
+need an immutable action revision.
+
 ## Notes
 
 The OpenUPM API remains non-blocking. This action provides blocking workflow
