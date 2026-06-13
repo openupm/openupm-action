@@ -1,0 +1,47 @@
+name: OpenUPM Publish Wait
+description: Trigger an OpenUPM package refresh and wait for a version to publish.
+author: OpenUPM
+branding:
+  icon: package
+  color: blue
+inputs:
+  package:
+    description: OpenUPM package name.
+    required: true
+  version:
+    description: Package version to wait for.
+    required: true
+  tag:
+    description: Git tag that triggered the workflow.
+    required: false
+    default: ''
+  timeout-minutes:
+    description: Maximum number of minutes to wait.
+    required: false
+    default: '15'
+  poll-interval-seconds:
+    description: Seconds between status checks.
+    required: false
+    default: '15'
+  api-url:
+    description: OpenUPM API base URL.
+    required: false
+    default: https://api.openupm.com
+  oidc-audience:
+    description: OIDC audience requested from GitHub.
+    required: false
+    default: openupm
+outputs:
+  state:
+    description: Final observed release state.
+  reason:
+    description: OpenUPM release reason when available.
+  published-version:
+    description: Version published to the registry when available.
+  signed:
+    description: Whether OpenUPM reports the package as signed.
+  package-url:
+    description: OpenUPM package page URL.
+runs:
+  using: node20
+  main: dist/index.js

@@ -1,0 +1,27 @@
+{
+  "name": "@openupm/openupm-action",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "license": "BSD-3-Clause",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "bundle": "ncc build build/main.js -o dist --source-map --license licenses.txt",
+    "lint": "eslint src --ext .ts",
+    "package": "npm run build && npm run bundle",
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@actions/core": "^1.11.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.31",
+    "@typescript-eslint/eslint-plugin": "^7.18.0",
+    "@typescript-eslint/parser": "^7.18.0",
+    "@vercel/ncc": "^0.38.3",
+    "eslint": "^8.57.1",
+    "typescript": "^5.4.5",
+    "vitest": "^1.6.1"
+  }
+}
