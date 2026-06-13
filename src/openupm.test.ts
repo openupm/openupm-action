@@ -4,6 +4,7 @@ import {
   OpenUpmApiError,
   OpenUpmClient,
   isRetryableStatusError,
+  triggerRefreshWithRetry,
   validatePositiveNumber,
   waitForPublishedVersion,
   type ReleaseStatus,
@@ -64,6 +65,58 @@ describe('OpenUpmClient', () => {
     ).rejects.toMatchObject(
       new OpenUpmApiError(403, 'no', 'RepositoryMismatch'),
     );
+  });
+});
+
+describe('triggerRefreshWithRetry', () => {
+  it('retries transient trigger errors', async () => {
+    const sleepDurations: number[] = [];
+    const client = {
+      triggerRefresh: vi
+        .fn()
+        .mockRejectedValueOnce(new OpenUpmApiError(502, 'bad gateway'))
+        .mockResolvedValueOnce(undefined),
+    };
+
+    await triggerRefreshWithRetry({
+      attempts: 3,
+      client,
+      delayMs: 5_000,
+      refresh: {
+        oidcToken: 'token',
+        packageName: 'com.example.foo',
+        version: '1.2.3',
+      },
+      sleep: async (ms) => {
+        sleepDurations.push(ms);
+      },
+    });
+
+    expect(client.triggerRefresh).toHaveBeenCalledTimes(2);
+    expect(sleepDurations).toEqual([5_000]);
+  });
+
+  it('fails fast on non-retryable trigger errors', async () => {
+    const client = {
+      triggerRefresh: vi
+        .fn()
+        .mockRejectedValue(new OpenUpmApiError(403, 'forbidden')),
+    };
+
+    await expect(
+      triggerRefreshWithRetry({
+        attempts: 3,
+        client,
+        delayMs: 5_000,
+        refresh: {
+          oidcToken: 'token',
+          packageName: 'com.example.foo',
+          version: '1.2.3',
+        },
+        sleep: async () => {},
+      }),
+    ).rejects.toMatchObject(new OpenUpmApiError(403, 'forbidden'));
+    expect(client.triggerRefresh).toHaveBeenCalledTimes(1);
   });
 });
 

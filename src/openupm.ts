@@ -34,6 +34,13 @@ export interface OpenUpmClientOptions {
   fetchImpl?: typeof fetch;
 }
 
+export interface TriggerRefreshParams {
+  oidcToken: string;
+  packageName: string;
+  tag?: string;
+  version: string;
+}
+
 export class OpenUpmApiError extends Error {
   constructor(
     public readonly status: number,
@@ -81,12 +88,7 @@ export class OpenUpmClient {
     this.fetchImpl = options.fetchImpl || fetch;
   }
 
-  async triggerRefresh(params: {
-    oidcToken: string;
-    packageName: string;
-    tag?: string;
-    version: string;
-  }): Promise<void> {
+  async triggerRefresh(params: TriggerRefreshParams): Promise<void> {
     const response = await this.fetchImpl(
       `${this.apiUrl}/packages/${encodeURIComponent(params.packageName)}/refresh`,
       {
@@ -132,6 +134,29 @@ export function validatePositiveNumber(
     throw new Error(`${name} must be a positive number.`);
   }
   return parsed;
+}
+
+export async function triggerRefreshWithRetry(params: {
+  attempts: number;
+  client: Pick<OpenUpmClient, 'triggerRefresh'>;
+  delayMs: number;
+  refresh: TriggerRefreshParams;
+  sleep: (ms: number) => Promise<void>;
+}): Promise<void> {
+  let lastError: unknown;
+  for (let attempt = 1; attempt <= params.attempts; attempt += 1) {
+    try {
+      await params.client.triggerRefresh(params.refresh);
+      return;
+    } catch (error) {
+      if (!isRetryableStatusError(error) || attempt === params.attempts) {
+        throw error;
+      }
+      lastError = error;
+      await params.sleep(params.delayMs);
+    }
+  }
+  throw lastError;
 }
 
 export async function waitForPublishedVersion(params: {

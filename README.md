@@ -108,3 +108,5 @@ The OpenUPM API remains non-blocking. This action provides blocking workflow
 behavior by polling until the version becomes installable, fails, or the
 configured timeout is reached. Transient status polling errors, such as
 temporary server errors or rate-limit responses, are retried until the timeout.
+Transient errors while sending the initial trigger request are retried with a
+small fixed retry budget.

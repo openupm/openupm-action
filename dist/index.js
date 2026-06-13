@@ -27426,11 +27426,17 @@ async function run() {
         const client = new _openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .OpenUpmClient */ .Oo({ apiUrl: inputs.apiUrl });
         const oidcToken = await _actions_core__WEBPACK_IMPORTED_MODULE_0__.getIDToken(inputs.oidcAudience);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Triggering OpenUPM refresh for ${inputs.packageName}.`);
-        await client.triggerRefresh({
-            oidcToken,
-            packageName: inputs.packageName,
-            tag: inputs.tag,
-            version: inputs.version,
+        await (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .triggerRefreshWithRetry */ .ym)({
+            attempts: 3,
+            client,
+            delayMs: 5_000,
+            refresh: {
+                oidcToken,
+                packageName: inputs.packageName,
+                tag: inputs.tag,
+                version: inputs.version,
+            },
+            sleep,
         });
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Waiting for ${inputs.packageName}@${inputs.version} to publish.`);
         const status = await (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .waitForPublishedVersion */ .nn)({
@@ -27474,7 +27480,8 @@ __webpack_async_result__();
 /* harmony export */   NS: () => (/* binding */ OpenUpmApiError),
 /* harmony export */   Oo: () => (/* binding */ OpenUpmClient),
 /* harmony export */   lk: () => (/* binding */ validatePositiveNumber),
-/* harmony export */   nn: () => (/* binding */ waitForPublishedVersion)
+/* harmony export */   nn: () => (/* binding */ waitForPublishedVersion),
+/* harmony export */   ym: () => (/* binding */ triggerRefreshWithRetry)
 /* harmony export */ });
 /* unused harmony export isRetryableStatusError */
 class OpenUpmApiError extends Error {
@@ -27545,6 +27552,23 @@ function validatePositiveNumber(name, value) {
         throw new Error(`${name} must be a positive number.`);
     }
     return parsed;
+}
+async function triggerRefreshWithRetry(params) {
+    let lastError;
+    for (let attempt = 1; attempt <= params.attempts; attempt += 1) {
+        try {
+            await params.client.triggerRefresh(params.refresh);
+            return;
+        }
+        catch (error) {
+            if (!isRetryableStatusError(error) || attempt === params.attempts) {
+                throw error;
+            }
+            lastError = error;
+            await params.sleep(params.delayMs);
+        }
+    }
+    throw lastError;
 }
 async function waitForPublishedVersion(params) {
     const now = params.now || Date.now;

@@ -3,6 +3,7 @@ import * as core from '@actions/core';
 import {
   OpenUpmClient,
   OpenUpmApiError,
+  triggerRefreshWithRetry,
   validatePositiveNumber,
   waitForPublishedVersion,
 } from './openupm.js';
@@ -61,11 +62,17 @@ export async function run(): Promise<void> {
     const oidcToken = await core.getIDToken(inputs.oidcAudience);
 
     core.info(`Triggering OpenUPM refresh for ${inputs.packageName}.`);
-    await client.triggerRefresh({
-      oidcToken,
-      packageName: inputs.packageName,
-      tag: inputs.tag,
-      version: inputs.version,
+    await triggerRefreshWithRetry({
+      attempts: 3,
+      client,
+      delayMs: 5_000,
+      refresh: {
+        oidcToken,
+        packageName: inputs.packageName,
+        tag: inputs.tag,
+        version: inputs.version,
+      },
+      sleep,
     });
 
     core.info(
