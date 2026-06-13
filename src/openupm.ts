@@ -44,6 +44,17 @@ export class OpenUpmApiError extends Error {
   }
 }
 
+export function isRetryableStatusError(error: unknown): boolean {
+  if (error instanceof OpenUpmApiError) {
+    return (
+      error.status === 408 ||
+      error.status === 429 ||
+      (error.status >= 500 && error.status <= 599)
+    );
+  }
+  return error instanceof TypeError;
+}
+
 function cleanApiUrl(apiUrl: string): string {
   return apiUrl.replace(/\/+$/g, '');
 }
@@ -136,13 +147,17 @@ export async function waitForPublishedVersion(params: {
   const deadline = now() + params.timeoutMs;
 
   while (now() <= deadline) {
-    const status = await params.client.getReleaseStatus({
-      packageName: params.packageName,
-      version: params.version,
-    });
+    try {
+      const status = await params.client.getReleaseStatus({
+        packageName: params.packageName,
+        version: params.version,
+      });
 
-    if (status.state === 'succeeded' || status.state === 'failed') {
-      return status as WaitResult;
+      if (status.state === 'succeeded' || status.state === 'failed') {
+        return status as WaitResult;
+      }
+    } catch (error) {
+      if (!isRetryableStatusError(error)) throw error;
     }
 
     const remainingMs = deadline - now();

@@ -27476,6 +27476,7 @@ __webpack_async_result__();
 /* harmony export */   lk: () => (/* binding */ validatePositiveNumber),
 /* harmony export */   nn: () => (/* binding */ waitForPublishedVersion)
 /* harmony export */ });
+/* unused harmony export isRetryableStatusError */
 class OpenUpmApiError extends Error {
     status;
     code;
@@ -27484,6 +27485,14 @@ class OpenUpmApiError extends Error {
         this.status = status;
         this.code = code;
     }
+}
+function isRetryableStatusError(error) {
+    if (error instanceof OpenUpmApiError) {
+        return (error.status === 408 ||
+            error.status === 429 ||
+            (error.status >= 500 && error.status <= 599));
+    }
+    return error instanceof TypeError;
 }
 function cleanApiUrl(apiUrl) {
     return apiUrl.replace(/\/+$/g, '');
@@ -27541,12 +27550,18 @@ async function waitForPublishedVersion(params) {
     const now = params.now || Date.now;
     const deadline = now() + params.timeoutMs;
     while (now() <= deadline) {
-        const status = await params.client.getReleaseStatus({
-            packageName: params.packageName,
-            version: params.version,
-        });
-        if (status.state === 'succeeded' || status.state === 'failed') {
-            return status;
+        try {
+            const status = await params.client.getReleaseStatus({
+                packageName: params.packageName,
+                version: params.version,
+            });
+            if (status.state === 'succeeded' || status.state === 'failed') {
+                return status;
+            }
+        }
+        catch (error) {
+            if (!isRetryableStatusError(error))
+                throw error;
         }
         const remainingMs = deadline - now();
         if (remainingMs <= 0)

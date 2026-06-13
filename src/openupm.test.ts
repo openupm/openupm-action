@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   OpenUpmApiError,
   OpenUpmClient,
+  isRetryableStatusError,
   validatePositiveNumber,
   waitForPublishedVersion,
   type ReleaseStatus,
@@ -183,6 +184,76 @@ describe('waitForPublishedVersion', () => {
 
     expect(result.state).toBe('timeout');
     expect(sleepDurations).toEqual([3_000]);
+  });
+
+  it('retries transient status API errors until success', async () => {
+    let now = 0;
+    const client = {
+      getReleaseStatus: vi
+        .fn()
+        .mockRejectedValueOnce(new OpenUpmApiError(503, 'unavailable'))
+        .mockResolvedValueOnce({
+          packageName: 'com.example.foo',
+          version: '1.2.3',
+          state: 'succeeded',
+          reason: 'none',
+          signed: false,
+          publishedVersion: '1.2.3',
+        }),
+    };
+
+    const result = await waitForPublishedVersion({
+      client,
+      now: () => now,
+      packageName: 'com.example.foo',
+      pollIntervalMs: 1_000,
+      sleep: async (ms) => {
+        now += ms;
+      },
+      timeoutMs: 5_000,
+      version: '1.2.3',
+    });
+
+    expect(result.state).toBe('succeeded');
+    expect(client.getReleaseStatus).toHaveBeenCalledTimes(2);
+  });
+
+  it('fails fast on non-retryable status API errors', async () => {
+    const client = {
+      getReleaseStatus: vi
+        .fn()
+        .mockRejectedValue(new OpenUpmApiError(404, 'not found')),
+    };
+
+    await expect(
+      waitForPublishedVersion({
+        client,
+        now: () => 0,
+        packageName: 'com.example.foo',
+        pollIntervalMs: 1_000,
+        sleep: async () => {},
+        timeoutMs: 5_000,
+        version: '1.2.3',
+      }),
+    ).rejects.toMatchObject(new OpenUpmApiError(404, 'not found'));
+  });
+});
+
+describe('isRetryableStatusError', () => {
+  it('classifies transient polling errors', () => {
+    expect(isRetryableStatusError(new OpenUpmApiError(408, 'timeout'))).toBe(
+      true,
+    );
+    expect(
+      isRetryableStatusError(new OpenUpmApiError(429, 'rate limited')),
+    ).toBe(true);
+    expect(isRetryableStatusError(new OpenUpmApiError(503, 'down'))).toBe(
+      true,
+    );
+    expect(isRetryableStatusError(new TypeError('network'))).toBe(true);
+    expect(isRetryableStatusError(new OpenUpmApiError(404, 'missing'))).toBe(
+      false,
+    );
   });
 });
 
