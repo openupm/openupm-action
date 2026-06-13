@@ -108,8 +108,8 @@ directly for both `version` and `tag`. Otherwise, pass the package version as
 ## Versioning
 
 Use `openupm/openupm-action@v1` for normal workflows. The `v1` tag is updated
-only for compatible fixes and improvements. Pin to a full release tag when you
-need an immutable action revision.
+only for compatible fixes and improvements. Pin to a full release tag such as
+`openupm/openupm-action@v1.0.0` when you need an immutable action revision.
 
 ## Notes
 
