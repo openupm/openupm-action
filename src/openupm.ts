@@ -41,6 +41,19 @@ export interface TriggerRefreshParams {
   version: string;
 }
 
+export interface TriggerRefreshResponse {
+  accepted: boolean;
+  deduped: boolean;
+  packageName: string;
+  version: string;
+  tag?: string;
+  statusUrl?: string;
+  release?: {
+    state: ReleaseState;
+    reason: string;
+  };
+}
+
 export class OpenUpmApiError extends Error {
   constructor(
     public readonly status: number,
@@ -88,7 +101,9 @@ export class OpenUpmClient {
     this.fetchImpl = options.fetchImpl || fetch;
   }
 
-  async triggerRefresh(params: TriggerRefreshParams): Promise<void> {
+  async triggerRefresh(
+    params: TriggerRefreshParams,
+  ): Promise<TriggerRefreshResponse> {
     const response = await this.fetchImpl(
       `${this.apiUrl}/packages/${encodeURIComponent(params.packageName)}/refresh`,
       {
@@ -104,6 +119,7 @@ export class OpenUpmClient {
       },
     );
     if (!response.ok) throw await readError(response);
+    return (await response.json()) as TriggerRefreshResponse;
   }
 
   async getReleaseStatus(params: {
@@ -150,12 +166,11 @@ export async function triggerRefreshWithRetry(params: {
   delayMs: number;
   refresh: TriggerRefreshParams;
   sleep: (ms: number) => Promise<void>;
-}): Promise<void> {
+}): Promise<TriggerRefreshResponse> {
   let lastError: unknown;
   for (let attempt = 1; attempt <= params.attempts; attempt += 1) {
     try {
-      await params.client.triggerRefresh(params.refresh);
-      return;
+      return await params.client.triggerRefresh(params.refresh);
     } catch (error) {
       if (!isRetryableStatusError(error) || attempt === params.attempts) {
         throw error;

@@ -60,12 +60,14 @@ function setOutputs(status: {
   publishedVersion?: string;
   signed?: boolean;
   packageUrl?: string;
+  statusUrl?: string;
 }): void {
   core.setOutput('state', status.state);
   core.setOutput('reason', status.reason || '');
   core.setOutput('published-version', status.publishedVersion || '');
   core.setOutput('signed', String(status.signed ?? false));
   core.setOutput('package-url', status.packageUrl || '');
+  core.setOutput('status-url', status.statusUrl || '');
 }
 
 export async function run(): Promise<void> {
@@ -75,7 +77,7 @@ export async function run(): Promise<void> {
     const oidcToken = await core.getIDToken(inputs.oidcAudience);
 
     core.info(`Triggering OpenUPM refresh for ${inputs.packageName}.`);
-    await triggerRefreshWithRetry({
+    const trigger = await triggerRefreshWithRetry({
       attempts: 3,
       client,
       delayMs: 5_000,
@@ -100,7 +102,7 @@ export async function run(): Promise<void> {
       version: inputs.version,
     });
 
-    setOutputs(status);
+    setOutputs({ ...status, statusUrl: trigger.statusUrl });
 
     if (status.state === 'succeeded') {
       core.info(

@@ -42,6 +42,8 @@ outputs:
     description: Whether OpenUPM reports the package as signed.
   package-url:
     description: OpenUPM package page URL.
+  status-url:
+    description: OpenUPM release status API URL.
 runs:
   using: node20
   main: dist/index.js

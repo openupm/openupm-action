@@ -27419,6 +27419,7 @@ function setOutputs(status) {
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('published-version', status.publishedVersion || '');
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('signed', String(status.signed ?? false));
     _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('package-url', status.packageUrl || '');
+    _actions_core__WEBPACK_IMPORTED_MODULE_0__.setOutput('status-url', status.statusUrl || '');
 }
 async function run() {
     try {
@@ -27426,7 +27427,7 @@ async function run() {
         const client = new _openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .OpenUpmClient */ .Oo({ apiUrl: inputs.apiUrl });
         const oidcToken = await _actions_core__WEBPACK_IMPORTED_MODULE_0__.getIDToken(inputs.oidcAudience);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Triggering OpenUPM refresh for ${inputs.packageName}.`);
-        await (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .triggerRefreshWithRetry */ .ym)({
+        const trigger = await (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .triggerRefreshWithRetry */ .ym)({
             attempts: 3,
             client,
             delayMs: 5_000,
@@ -27447,7 +27448,7 @@ async function run() {
             timeoutMs: inputs.timeoutMs,
             version: inputs.version,
         });
-        setOutputs(status);
+        setOutputs({ ...status, statusUrl: trigger.statusUrl });
         if (status.state === 'succeeded') {
             _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`OpenUPM published ${inputs.packageName}@${status.publishedVersion || inputs.version}.`);
             return;
@@ -27535,6 +27536,7 @@ class OpenUpmClient {
         });
         if (!response.ok)
             throw await readError(response);
+        return (await response.json());
     }
     async getReleaseStatus(params) {
         const response = await this.fetchImpl(`${this.apiUrl}/packages/${encodeURIComponent(params.packageName)}/releases/${encodeURIComponent(params.version)}/status`, {
@@ -27565,8 +27567,7 @@ async function triggerRefreshWithRetry(params) {
     let lastError;
     for (let attempt = 1; attempt <= params.attempts; attempt += 1) {
         try {
-            await params.client.triggerRefresh(params.refresh);
-            return;
+            return await params.client.triggerRefresh(params.refresh);
         }
         catch (error) {
             if (!isRetryableStatusError(error) || attempt === params.attempts) {

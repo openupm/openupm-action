@@ -20,13 +20,23 @@ function jsonResponse(status: number, body: unknown): Response {
 
 describe('OpenUpmClient', () => {
   it('triggers package refresh with OIDC bearer token', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(jsonResponse(202, {}));
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse(202, {
+        accepted: true,
+        deduped: false,
+        packageName: 'com.example.foo',
+        version: '1.2.3',
+        tag: 'upm/1.2.3',
+        statusUrl:
+          'https://api.openupm.com/packages/com.example.foo/releases/1.2.3/status',
+      }),
+    );
     const client = new OpenUpmClient({
       apiUrl: 'https://api.openupm.com/',
       fetchImpl,
     });
 
-    await client.triggerRefresh({
+    const response = await client.triggerRefresh({
       oidcToken: 'token',
       packageName: 'com.example.foo',
       tag: 'upm/1.2.3',
@@ -43,6 +53,9 @@ describe('OpenUpmClient', () => {
         },
         body: JSON.stringify({ version: '1.2.3', tag: 'upm/1.2.3' }),
       }),
+    );
+    expect(response.statusUrl).toBe(
+      'https://api.openupm.com/packages/com.example.foo/releases/1.2.3/status',
     );
   });
 
@@ -76,10 +89,17 @@ describe('triggerRefreshWithRetry', () => {
       triggerRefresh: vi
         .fn()
         .mockRejectedValueOnce(new OpenUpmApiError(502, 'bad gateway'))
-        .mockResolvedValueOnce(undefined),
+        .mockResolvedValueOnce({
+          accepted: true,
+          deduped: false,
+          packageName: 'com.example.foo',
+          version: '1.2.3',
+          statusUrl:
+            'https://api.openupm.com/packages/com.example.foo/releases/1.2.3/status',
+        }),
     };
 
-    await triggerRefreshWithRetry({
+    const response = await triggerRefreshWithRetry({
       attempts: 3,
       client,
       delayMs: 5_000,
@@ -95,6 +115,7 @@ describe('triggerRefreshWithRetry', () => {
 
     expect(client.triggerRefresh).toHaveBeenCalledTimes(2);
     expect(sleepDurations).toEqual([5_000]);
+    expect(response.statusUrl).toContain('/releases/1.2.3/status');
   });
 
   it('fails fast on non-retryable trigger errors', async () => {

@@ -103,6 +103,7 @@ directly for both `version` and `tag`. Otherwise, pass the package version as
 | `published-version` | Version published to the registry when available. |
 | `signed` | Whether OpenUPM reports the package as signed. |
 | `package-url` | OpenUPM package page URL. |
+| `status-url` | OpenUPM release status API URL. |
 
 ## Versioning
 
