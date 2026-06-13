@@ -110,3 +110,11 @@ configured timeout is reached. Transient status polling errors, such as
 temporary server errors or rate-limit responses, are retried until the timeout.
 Transient errors while sending the initial trigger request are retried with a
 small fixed retry budget.
+
+A successful action run means the requested package version is available from
+the OpenUPM registry. The OpenUPM package page and website search may update on
+their own refresh cycle after the registry publish finishes.
+
+If the action reports a failed OpenUPM release, check the package page's build
+history for the public failure reason, fix the package or tag, then create a new
+version tag or re-tag a failed version if your repository policy allows it.
