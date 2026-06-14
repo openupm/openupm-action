@@ -19,14 +19,6 @@ inputs:
     description: Seconds between status checks.
     required: false
     default: '15'
-  api-url:
-    description: OpenUPM API base URL.
-    required: false
-    default: https://api.openupm.com
-  oidc-audience:
-    description: OIDC audience requested from GitHub.
-    required: false
-    default: openupm
 outputs:
   state:
     description: Final observed release state.

@@ -8,8 +8,6 @@ export type ReleaseState =
   | 'failed';
 
 export interface ActionInputs {
-  apiUrl: string;
-  oidcAudience: string;
   packageName: string;
   pollIntervalSeconds: number;
   tag: string;

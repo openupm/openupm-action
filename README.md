@@ -16,6 +16,11 @@ personal access token, or repository secret.
 
 ## Tag Push Workflow
 
+Only send tags that contain a parseable semver package version to this action,
+for example `1.2.3`, `v1.2.3`, `upm/1.2.3`, or
+`com.example.package@v1.2.3`. Other tags are rejected before the action
+contacts OpenUPM.
+
 ```yaml
 name: Publish to OpenUPM
 
@@ -38,11 +43,9 @@ jobs:
           tag: ${{ github.ref_name }}
 ```
 
-OpenUPM derives the package version from common tag shapes such as `1.2.3`,
-`v1.2.3`, `upm/1.2.3`, and `com.example.package@v1.2.3`. The action requests
-an OIDC token for the `openupm` audience, asks OpenUPM to scan the registered
-package repository, then polls the release status endpoint for the derived
-version.
+The action requests an OIDC token for the fixed `openupm` audience, asks
+OpenUPM to scan the registered package repository, then polls the release
+status endpoint for the derived version.
 
 ## GitHub Release Workflow
 
@@ -80,8 +83,6 @@ before contacting OpenUPM.
 | `tag` | required | Git tag that triggered the workflow. OpenUPM verifies it against the OIDC token ref. |
 | `timeout-minutes` | `15` | Maximum time to wait before failing the action. |
 | `poll-interval-seconds` | `15` | Delay between status checks. |
-| `api-url` | `https://api.openupm.com` | OpenUPM API base URL. |
-| `oidc-audience` | `openupm` | OIDC audience requested from GitHub. |
 
 ## Outputs
 

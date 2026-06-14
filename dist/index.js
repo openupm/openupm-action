@@ -30156,6 +30156,8 @@ __nccwpck_require__.a(__webpack_module__, async (__webpack_handle_async_dependen
 /* harmony import */ var _openupm_js__WEBPACK_IMPORTED_MODULE_1__ = __nccwpck_require__(872);
 
 
+const OPENUPM_API_URL = 'https://api.openupm.com';
+const OPENUPM_OIDC_AUDIENCE = 'openupm';
 function getInputs() {
     const timeoutMinutes = (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validatePositiveNumber */ .lk)('timeout-minutes', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('timeout-minutes'));
     const pollIntervalSeconds = (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validatePositiveNumber */ .lk)('poll-interval-seconds', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('poll-interval-seconds'));
@@ -30165,8 +30167,6 @@ function getInputs() {
         throw new Error(`tag must contain an OpenUPM-compatible package version: ${tag}`);
     }
     return {
-        apiUrl: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('api-url', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('api-url', { required: true })),
-        oidcAudience: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('oidc-audience', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('oidc-audience', { required: true })),
         packageName: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('package', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('package', { required: true })),
         pollIntervalMs: pollIntervalSeconds * 1000,
         tag,
@@ -30187,8 +30187,8 @@ function setOutputs(status) {
 async function run() {
     try {
         const inputs = getInputs();
-        const client = new _openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .OpenUpmClient */ .Oo({ apiUrl: inputs.apiUrl });
-        const oidcToken = await _actions_core__WEBPACK_IMPORTED_MODULE_0__.getIDToken(inputs.oidcAudience);
+        const client = new _openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .OpenUpmClient */ .Oo({ apiUrl: OPENUPM_API_URL });
+        const oidcToken = await _actions_core__WEBPACK_IMPORTED_MODULE_0__.getIDToken(OPENUPM_OIDC_AUDIENCE);
         _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Triggering OpenUPM refresh for ${inputs.packageName}.`);
         const trigger = await (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .triggerRefreshWithRetry */ .ym)({
             attempts: 3,

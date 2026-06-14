@@ -10,9 +10,10 @@ import {
   waitForPublishedVersion,
 } from './openupm.js';
 
+const OPENUPM_API_URL = 'https://api.openupm.com';
+const OPENUPM_OIDC_AUDIENCE = 'openupm';
+
 function getInputs(): {
-  apiUrl: string;
-  oidcAudience: string;
   packageName: string;
   pollIntervalMs: number;
   tag: string;
@@ -37,14 +38,6 @@ function getInputs(): {
     );
   }
   return {
-    apiUrl: validateRequiredString(
-      'api-url',
-      core.getInput('api-url', { required: true }),
-    ),
-    oidcAudience: validateRequiredString(
-      'oidc-audience',
-      core.getInput('oidc-audience', { required: true }),
-    ),
     packageName: validateRequiredString(
       'package',
       core.getInput('package', { required: true }),
@@ -78,8 +71,8 @@ function setOutputs(status: {
 export async function run(): Promise<void> {
   try {
     const inputs = getInputs();
-    const client = new OpenUpmClient({ apiUrl: inputs.apiUrl });
-    const oidcToken = await core.getIDToken(inputs.oidcAudience);
+    const client = new OpenUpmClient({ apiUrl: OPENUPM_API_URL });
+    const oidcToken = await core.getIDToken(OPENUPM_OIDC_AUDIENCE);
 
     core.info(`Triggering OpenUPM refresh for ${inputs.packageName}.`);
     const trigger = await triggerRefreshWithRetry({
