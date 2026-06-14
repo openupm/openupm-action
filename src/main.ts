@@ -16,7 +16,7 @@ function getInputs(): {
   pollIntervalMs: number;
   tag?: string;
   timeoutMs: number;
-  version: string;
+  version?: string;
 } {
   const timeoutMinutes = validatePositiveNumber(
     'timeout-minutes',
@@ -43,10 +43,7 @@ function getInputs(): {
     pollIntervalMs: pollIntervalSeconds * 1000,
     tag: tag || undefined,
     timeoutMs: timeoutMinutes * 60 * 1000,
-    version: validateRequiredString(
-      'version',
-      core.getInput('version', { required: true }),
-    ),
+    version: core.getInput('version').trim() || undefined,
   };
 }
 
@@ -89,37 +86,36 @@ export async function run(): Promise<void> {
       },
       sleep,
     });
+    const version = trigger.version;
 
-    core.info(
-      `Waiting for ${inputs.packageName}@${inputs.version} to publish.`,
-    );
+    core.info(`Waiting for ${inputs.packageName}@${version} to publish.`);
     const status = await waitForPublishedVersion({
       client,
       packageName: inputs.packageName,
       pollIntervalMs: inputs.pollIntervalMs,
       sleep,
       timeoutMs: inputs.timeoutMs,
-      version: inputs.version,
+      version,
     });
 
     setOutputs({ ...status, statusUrl: trigger.statusUrl });
 
     if (status.state === 'succeeded') {
       core.info(
-        `OpenUPM published ${inputs.packageName}@${status.publishedVersion || inputs.version}.`,
+        `OpenUPM published ${inputs.packageName}@${status.publishedVersion || version}.`,
       );
       return;
     }
 
     if (status.state === 'failed') {
       core.setFailed(
-        `OpenUPM publishing failed for ${inputs.packageName}@${inputs.version}: ${status.reason}`,
+        `OpenUPM publishing failed for ${inputs.packageName}@${version}: ${status.reason}`,
       );
       return;
     }
 
     core.setFailed(
-      `Timed out waiting for OpenUPM to publish ${inputs.packageName}@${inputs.version}.`,
+      `Timed out waiting for OpenUPM to publish ${inputs.packageName}@${version}.`,
     );
   } catch (error) {
     if (error instanceof OpenUpmApiError) {

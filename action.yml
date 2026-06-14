@@ -1,5 +1,5 @@
 name: OpenUPM Publish Wait
-description: Trigger an OpenUPM package refresh and wait for a version to publish.
+description: Trigger an OpenUPM package refresh and wait for a tag to publish.
 author: OpenUPM
 branding:
   icon: package
@@ -9,8 +9,9 @@ inputs:
     description: OpenUPM package name.
     required: true
   version:
-    description: Package version to wait for.
-    required: true
+    description: Package version to wait for. Optional when tag contains an OpenUPM-compatible version.
+    required: false
+    default: ''
   tag:
     description: Git tag that triggered the workflow.
     required: false

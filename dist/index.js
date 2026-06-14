@@ -27407,7 +27407,7 @@ function getInputs() {
         pollIntervalMs: pollIntervalSeconds * 1000,
         tag: tag || undefined,
         timeoutMs: timeoutMinutes * 60 * 1000,
-        version: (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .validateRequiredString */ .Ho)('version', _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('version', { required: true })),
+        version: _actions_core__WEBPACK_IMPORTED_MODULE_0__.getInput('version').trim() || undefined,
     };
 }
 function sleep(ms) {
@@ -27439,25 +27439,26 @@ async function run() {
             },
             sleep,
         });
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Waiting for ${inputs.packageName}@${inputs.version} to publish.`);
+        const version = trigger.version;
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`Waiting for ${inputs.packageName}@${version} to publish.`);
         const status = await (0,_openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .waitForPublishedVersion */ .nn)({
             client,
             packageName: inputs.packageName,
             pollIntervalMs: inputs.pollIntervalMs,
             sleep,
             timeoutMs: inputs.timeoutMs,
-            version: inputs.version,
+            version,
         });
         setOutputs({ ...status, statusUrl: trigger.statusUrl });
         if (status.state === 'succeeded') {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`OpenUPM published ${inputs.packageName}@${status.publishedVersion || inputs.version}.`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.info(`OpenUPM published ${inputs.packageName}@${status.publishedVersion || version}.`);
             return;
         }
         if (status.state === 'failed') {
-            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`OpenUPM publishing failed for ${inputs.packageName}@${inputs.version}: ${status.reason}`);
+            _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`OpenUPM publishing failed for ${inputs.packageName}@${version}: ${status.reason}`);
             return;
         }
-        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`Timed out waiting for OpenUPM to publish ${inputs.packageName}@${inputs.version}.`);
+        _actions_core__WEBPACK_IMPORTED_MODULE_0__.setFailed(`Timed out waiting for OpenUPM to publish ${inputs.packageName}@${version}.`);
     }
     catch (error) {
         if (error instanceof _openupm_js__WEBPACK_IMPORTED_MODULE_1__/* .OpenUpmApiError */ .NS) {
@@ -27530,7 +27531,7 @@ class OpenUpmClient {
                 'Content-Type': 'application/json',
             },
             body: JSON.stringify({
-                version: params.version,
+                ...(params.version ? { version: params.version } : {}),
                 ...(params.tag ? { tag: params.tag } : {}),
             }),
         });

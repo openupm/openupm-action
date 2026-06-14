@@ -40,7 +40,6 @@ describe('OpenUpmClient', () => {
       oidcToken: 'token',
       packageName: 'com.example.foo',
       tag: 'upm/1.2.3',
-      version: '1.2.3',
     });
 
     expect(fetchImpl).toHaveBeenCalledWith(
@@ -51,11 +50,40 @@ describe('OpenUpmClient', () => {
           Authorization: 'Bearer token',
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ version: '1.2.3', tag: 'upm/1.2.3' }),
+        body: JSON.stringify({ tag: 'upm/1.2.3' }),
       }),
     );
     expect(response.statusUrl).toBe(
       'https://api.openupm.com/packages/com.example.foo/releases/1.2.3/status',
+    );
+  });
+
+  it('sends an explicit version override when provided', async () => {
+    const fetchImpl = vi.fn().mockResolvedValue(
+      jsonResponse(202, {
+        accepted: true,
+        deduped: false,
+        packageName: 'com.example.foo',
+        version: '1.2.3',
+      }),
+    );
+    const client = new OpenUpmClient({
+      apiUrl: 'https://api.openupm.com',
+      fetchImpl,
+    });
+
+    await client.triggerRefresh({
+      oidcToken: 'token',
+      packageName: 'com.example.foo',
+      tag: 'release',
+      version: '1.2.3',
+    });
+
+    expect(fetchImpl).toHaveBeenCalledWith(
+      'https://api.openupm.com/packages/com.example.foo/refresh',
+      expect.objectContaining({
+        body: JSON.stringify({ version: '1.2.3', tag: 'release' }),
+      }),
     );
   });
 

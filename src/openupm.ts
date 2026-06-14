@@ -12,7 +12,7 @@ export interface ActionInputs {
   pollIntervalSeconds: number;
   tag?: string;
   timeoutMinutes: number;
-  version: string;
+  version?: string;
 }
 
 export interface ReleaseStatus {
@@ -38,7 +38,7 @@ export interface TriggerRefreshParams {
   oidcToken: string;
   packageName: string;
   tag?: string;
-  version: string;
+  version?: string;
 }
 
 export interface TriggerRefreshResponse {
@@ -113,7 +113,7 @@ export class OpenUpmClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          version: params.version,
+          ...(params.version ? { version: params.version } : {}),
           ...(params.tag ? { tag: params.tag } : {}),
         }),
       },
