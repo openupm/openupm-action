@@ -110,6 +110,12 @@ temporary server errors or rate-limit responses, are retried until the timeout.
 Transient errors while sending the initial trigger request are retried with a
 small fixed retry budget.
 
+OpenUPM rate limits accepted refresh trigger requests to 20 requests per hour
+for each package, GitHub repository, and caller IP combination. If the limit is
+exceeded, OpenUPM returns `429 RateLimitExceeded` with a `Retry-After` header.
+This protects the public trigger endpoint from accidental workflow loops and
+repeated valid OIDC requests.
+
 A successful action run means the requested package version is available from
 the OpenUPM registry. The OpenUPM package page and website search may update on
 their own refresh cycle after the registry publish finishes.
