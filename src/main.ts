@@ -3,6 +3,7 @@ import * as core from '@actions/core';
 import {
   OpenUpmClient,
   OpenUpmApiError,
+  getVersionFromTag,
   triggerRefreshWithRetry,
   validatePositiveNumber,
   validateRequiredString,
@@ -14,9 +15,8 @@ function getInputs(): {
   oidcAudience: string;
   packageName: string;
   pollIntervalMs: number;
-  tag?: string;
+  tag: string;
   timeoutMs: number;
-  version?: string;
 } {
   const timeoutMinutes = validatePositiveNumber(
     'timeout-minutes',
@@ -26,7 +26,16 @@ function getInputs(): {
     'poll-interval-seconds',
     core.getInput('poll-interval-seconds'),
   );
-  const tag = core.getInput('tag').trim();
+  const tag = validateRequiredString(
+    'tag',
+    core.getInput('tag', { required: true }),
+  );
+  const version = getVersionFromTag(tag);
+  if (!version) {
+    throw new Error(
+      `tag must contain an OpenUPM-compatible package version: ${tag}`,
+    );
+  }
   return {
     apiUrl: validateRequiredString(
       'api-url',
@@ -41,9 +50,8 @@ function getInputs(): {
       core.getInput('package', { required: true }),
     ),
     pollIntervalMs: pollIntervalSeconds * 1000,
-    tag: tag || undefined,
+    tag,
     timeoutMs: timeoutMinutes * 60 * 1000,
-    version: core.getInput('version').trim() || undefined,
   };
 }
 
@@ -82,7 +90,6 @@ export async function run(): Promise<void> {
         oidcToken,
         packageName: inputs.packageName,
         tag: inputs.tag,
-        version: inputs.version,
       },
       sleep,
     });

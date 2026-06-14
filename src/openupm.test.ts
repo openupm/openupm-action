@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   OpenUpmApiError,
   OpenUpmClient,
+  getVersionFromTag,
   isRetryableStatusError,
   triggerRefreshWithRetry,
   validatePositiveNumber,
@@ -58,35 +59,6 @@ describe('OpenUpmClient', () => {
     );
   });
 
-  it('sends an explicit version override when provided', async () => {
-    const fetchImpl = vi.fn().mockResolvedValue(
-      jsonResponse(202, {
-        accepted: true,
-        deduped: false,
-        packageName: 'com.example.foo',
-        version: '1.2.3',
-      }),
-    );
-    const client = new OpenUpmClient({
-      apiUrl: 'https://api.openupm.com',
-      fetchImpl,
-    });
-
-    await client.triggerRefresh({
-      oidcToken: 'token',
-      packageName: 'com.example.foo',
-      tag: 'release',
-      version: '1.2.3',
-    });
-
-    expect(fetchImpl).toHaveBeenCalledWith(
-      'https://api.openupm.com/packages/com.example.foo/refresh',
-      expect.objectContaining({
-        body: JSON.stringify({ version: '1.2.3', tag: 'release' }),
-      }),
-    );
-  });
-
   it('maps API errors', async () => {
     const fetchImpl = vi
       .fn()
@@ -102,12 +74,31 @@ describe('OpenUpmClient', () => {
       client.triggerRefresh({
         oidcToken: 'token',
         packageName: 'com.example.foo',
-        version: '1.2.3',
+        tag: 'upm/1.2.3',
       }),
     ).rejects.toMatchObject(
       new OpenUpmApiError(403, 'no', 'RepositoryMismatch'),
     );
   });
+});
+
+describe('getVersionFromTag', () => {
+  it.each([
+    ['1.2.3', '1.2.3'],
+    ['v1.2.3', '1.2.3'],
+    ['upm/1.2.3', '1.2.3'],
+    ['upm/v1.2.3-preview.1', '1.2.3-preview.1'],
+    ['com.example.package@v1.2.3', '1.2.3'],
+  ])('parses %s as %s', (tag, version) => {
+    expect(getVersionFromTag(tag)).toBe(version);
+  });
+
+  it.each(['release', 'latest', 'com.example.package1.2.3'])(
+    'returns null for %s',
+    (tag) => {
+      expect(getVersionFromTag(tag)).toBeNull();
+    },
+  );
 });
 
 describe('triggerRefreshWithRetry', () => {
@@ -134,7 +125,7 @@ describe('triggerRefreshWithRetry', () => {
       refresh: {
         oidcToken: 'token',
         packageName: 'com.example.foo',
-        version: '1.2.3',
+        tag: 'upm/1.2.3',
       },
       sleep: async (ms) => {
         sleepDurations.push(ms);
@@ -161,7 +152,7 @@ describe('triggerRefreshWithRetry', () => {
         refresh: {
           oidcToken: 'token',
           packageName: 'com.example.foo',
-          version: '1.2.3',
+          tag: 'upm/1.2.3',
         },
         sleep: async () => {},
       }),

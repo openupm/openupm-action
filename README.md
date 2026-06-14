@@ -69,17 +69,15 @@ jobs:
           tag: ${{ github.event.release.tag_name }}
 ```
 
-If your repository uses a tag shape that OpenUPM cannot parse, pass `version`
-as an explicit override. The value must match the `version` field in the
-package's `package.json` at that tag.
+If the tag does not contain a parseable package version, the action fails
+before contacting OpenUPM.
 
 ## Inputs
 
 | Input | Default | Description |
 | --- | --- | --- |
 | `package` | required | OpenUPM package name. |
-| `version` | empty | Optional package version override. Only needed when OpenUPM cannot derive the version from `tag`. |
-| `tag` | empty | Git tag that triggered the workflow. When set, OpenUPM verifies it against the OIDC token ref. |
+| `tag` | required | Git tag that triggered the workflow. OpenUPM verifies it against the OIDC token ref. |
 | `timeout-minutes` | `15` | Maximum time to wait before failing the action. |
 | `poll-interval-seconds` | `15` | Delay between status checks. |
 | `api-url` | `https://api.openupm.com` | OpenUPM API base URL. |

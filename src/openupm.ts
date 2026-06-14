@@ -1,3 +1,5 @@
+import { clean } from 'semver';
+
 export type ReleaseState =
   | 'unknown'
   | 'pending'
@@ -10,9 +12,8 @@ export interface ActionInputs {
   oidcAudience: string;
   packageName: string;
   pollIntervalSeconds: number;
-  tag?: string;
+  tag: string;
   timeoutMinutes: number;
-  version?: string;
 }
 
 export interface ReleaseStatus {
@@ -37,8 +38,7 @@ export interface OpenUpmClientOptions {
 export interface TriggerRefreshParams {
   oidcToken: string;
   packageName: string;
-  tag?: string;
-  version?: string;
+  tag: string;
 }
 
 export interface TriggerRefreshResponse {
@@ -73,6 +73,36 @@ export function isRetryableStatusError(error: unknown): boolean {
     );
   }
   return error instanceof TypeError;
+}
+
+const VERSION_TOKEN_AT_START_RE = /^(v?\d+\.\d+\.\d+\S*)/i;
+const VERSION_TOKEN_SEPARATORS = '/_@-';
+
+function stripOpenUpmSuffix(tag: string): string {
+  return tag.replace(/(_|-)(upm|master)$/i, '');
+}
+
+function cleanVersionToken(token: string): string | null {
+  return clean(stripOpenUpmSuffix(token).toLowerCase(), { loose: true });
+}
+
+export function getVersionFromTag(tag: string): string | null {
+  const direct = cleanVersionToken(tag);
+  if (direct) return direct;
+
+  for (let start = 0; start < tag.length; start++) {
+    if (start > 0 && !VERSION_TOKEN_SEPARATORS.includes(tag[start - 1])) {
+      continue;
+    }
+
+    const match = tag.slice(start).match(VERSION_TOKEN_AT_START_RE);
+    if (!match) continue;
+
+    const version = cleanVersionToken(match[1]);
+    if (version) return version;
+  }
+
+  return null;
 }
 
 function cleanApiUrl(apiUrl: string): string {
@@ -113,8 +143,7 @@ export class OpenUpmClient {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          ...(params.version ? { version: params.version } : {}),
-          ...(params.tag ? { tag: params.tag } : {}),
+          tag: params.tag,
         }),
       },
     );

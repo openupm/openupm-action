@@ -8,14 +8,9 @@ inputs:
   package:
     description: OpenUPM package name.
     required: true
-  version:
-    description: Package version to wait for. Optional when tag contains an OpenUPM-compatible version.
-    required: false
-    default: ''
   tag:
     description: Git tag that triggered the workflow.
-    required: false
-    default: ''
+    required: true
   timeout-minutes:
     description: Maximum number of minutes to wait.
     required: false
