@@ -27,7 +27,7 @@ name: Publish to OpenUPM
 on:
   push:
     tags:
-      - '*'
+      - '**'
 
 permissions:
   id-token: write
@@ -45,7 +45,7 @@ jobs:
 
 The action requests an OIDC token for the fixed `openupm` audience, asks
 OpenUPM to scan the registered package repository, then polls the release
-status endpoint for the derived version.
+status endpoint for the version parsed from the tag.
 
 ## GitHub Release Workflow
 
