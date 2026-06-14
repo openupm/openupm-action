@@ -33,5 +33,5 @@ outputs:
   status-url:
     description: OpenUPM release status API URL.
 runs:
-  using: node20
+  using: node24
   main: dist/index.js
